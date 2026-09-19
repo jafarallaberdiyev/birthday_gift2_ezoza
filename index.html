@@ -29,7 +29,7 @@
     --glass-bg-solid: rgba(16,16,21,0.88);
     --glass-line: rgba(247,244,235,0.14);
     --glass-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10);
-    --glass-blur: blur(20px) saturate(180%);
+    --glass-blur: blur(16px) saturate(160%);
   }
   *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html,body{
@@ -205,9 +205,15 @@
     #navDots, .navArrow, .replayBtn{ background:var(--glass-bg-solid); }
   }
 
+  /* On a touch screen the arrows are pure cost: two more blurred layers
+     sitting over a live scene, for a gesture she already has. */
+  @media (hover: none) and (pointer: coarse){
+    .navArrow{ display:none; }
+  }
+
   @media (max-width:640px){
     .navArrow{ width:38px; height:38px; font-size:17px; }
-    #navDots{ bottom:calc(12px + env(safe-area-inset-bottom, 0px)); gap:9px; padding:10px 15px; }
+    #navDots{ bottom:calc(10px + env(safe-area-inset-bottom, 0px)); gap:8px; padding:9px 13px; }
   }
 
   /* ---------------- First-time swipe hint ---------------- */
@@ -236,25 +242,25 @@
 <div id="stageWrap">
 
   <section class="slide active" id="slide0" data-title="Bloom">
-    <iframe data-src="scene1_bloom.html" title="Bloom" allow="autoplay" loading="eager"></iframe>
+    <iframe data-src="scene1_bloom.html?v=2" title="Bloom" allow="autoplay" loading="eager"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
 
   <section class="slide" id="slide1" data-title="Garden">
-    <iframe data-src="scene2_garden.html" title="A Living Garden" allow="autoplay"></iframe>
+    <iframe data-src="scene2_garden.html?v=2" title="A Living Garden" allow="autoplay"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
 
   <section class="slide" id="slide2" data-title="Message">
-    <iframe data-src="scene3_loveme.html" title="Encrypted Message" allow="autoplay"></iframe>
+    <iframe data-src="scene3_loveme.html?v=2" title="Encrypted Message" allow="autoplay"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
 
   <section class="slide" id="slide3" data-title="Sanctuary">
-    <iframe data-src="scene4_butterflies.html" title="Butterfly Sanctuary" allow="autoplay"></iframe>
+    <iframe data-src="scene4_butterflies.html?v=2" title="Butterfly Sanctuary" allow="autoplay"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
@@ -412,7 +418,12 @@
     }
   }
   Array.prototype.forEach.call(document.querySelectorAll('.slide iframe'), function(frame){
-    frame.addEventListener('load', function(){ hookFrame(frame); });
+    frame.addEventListener('load', function(){
+      hookFrame(frame);
+      // It may have loaded off-screen while she was reading another slide.
+      frame.__deckPower = null;
+      updateScenePower(current);
+    });
     hookFrame(frame);
   });
 
@@ -447,10 +458,25 @@
     nextArrow.style.visibility = (current === total - 1) ? 'hidden' : 'visible';
   }
 
+  /* Every scene is a full animation engine - canvases, WebGL, timers. Four of
+     them running at once is what makes a phone crawl, so the deck runs exactly
+     one: the slide in view. The others sit frozen until she swipes to them. */
+  function updateScenePower(index){
+    slides.forEach(function(s, i){
+      var frame = s.querySelector('iframe');
+      if (!frame || !frame.getAttribute('src')) return;
+      var wanted = (i === index) ? 'gift:resume' : 'gift:pause';
+      if (wanted === 'gift:pause' && frame.__deckPower === wanted) return;
+      frame.__deckPower = wanted;
+      try { frame.contentWindow.postMessage(wanted, '*'); } catch (err) {}
+    });
+  }
+
   function setActive(index){
     if (index < 0 || index >= total) return;
     current = index;
     loadNeighbors(index);
+    updateScenePower(index);
     slides.forEach(function(s, i){ s.classList.toggle('active', i === index); });
     dots.forEach(function(d, i){ d.classList.toggle('active', i === index); });
     updateArrows();
@@ -496,11 +522,18 @@
     var w = stage.clientWidth || 1;
     var sl = stage.scrollLeft;
     for (var i = 0; i < total; i++) {
-      var d = Math.min(1, Math.abs(i * w - sl) / w); // 0 = centred, 1 = a full slide away
+      var d = Math.abs(i * w - sl) / w; // 0 = centred, 1 = a full slide away
+      if (d > 1) d = 1;
+      // Quantised to 16 steps: a slide holding a WebGL scene has to be
+      // re-rastered at every distinct scale, so a continuous value repaints
+      // it on every single frame of a swipe. Sixteen looks identical and
+      // skips almost all of that work.
+      d = Math.round(d * 16) / 16;
       var s = slides[i];
-      s.style.transform = 'scale(' + (1 - d * 0.12).toFixed(4) + ')';
-      s.style.opacity = (1 - d * 0.45).toFixed(3);
-      s.style.borderRadius = (d * 26).toFixed(1) + 'px';
+      if (s.__depth === d) continue;
+      s.__depth = d;
+      s.style.transform = d ? 'scale(' + (1 - d * 0.1) + ')' : '';
+      s.style.opacity = d ? String(1 - d * 0.4) : '';
     }
   }
 

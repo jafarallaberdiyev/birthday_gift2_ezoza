@@ -2,6 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<!-- ==========================================================================
+     GIFT DECK RUNTIME - loaded first, on purpose.
+     This scene is one slide of a horizontal deck. While it is off-screen it
+     must cost nothing, so this wraps requestAnimationFrame / setInterval
+     before any scene code runs and idles every loop until the deck says the
+     slide is visible. It also forwards the first touch up to the deck so the
+     global song can start, since taps inside an iframe never reach the parent.
+     Opened on its own (not inside the deck), this does nothing at all.
+     ========================================================================== -->
+<script>
+(function(){
+  if (window.parent === window) return;
+
+  /* ---- 1. let the deck know it was touched ---- */
+  function tell(){ try { window.parent.postMessage('gift:touch', '*'); } catch (e) {} }
+  ['pointerdown','touchstart','click','keydown'].forEach(function(t){
+    document.addEventListener(t, tell, { capture: true, passive: true });
+  });
+
+  /* ---- 2. freeze every animation loop while off-screen ---- */
+  var paused = false;
+  var queued = [];
+  var fakeId = -1;
+
+  var rafNative = window.requestAnimationFrame && window.requestAnimationFrame.bind(window);
+  var cafNative = window.cancelAnimationFrame && window.cancelAnimationFrame.bind(window);
+  if (rafNative) {
+    window.requestAnimationFrame = function(cb){
+      if (!paused) return rafNative(cb);
+      var id = fakeId--;
+      queued.push({ id: id, cb: cb });
+      return id;
+    };
+    window.cancelAnimationFrame = function(id){
+      if (typeof id === 'number' && id < 0) {
+        for (var i = 0; i < queued.length; i++) {
+          if (queued[i].id === id) { queued.splice(i, 1); return; }
+        }
+        return;
+      }
+      if (cafNative) cafNative(id);
+    };
+  }
+
+  var intervalNative = window.setInterval.bind(window);
+  window.setInterval = function(fn, ms){
+    if (typeof fn !== 'function') return intervalNative.apply(window, arguments);
+    var extra = Array.prototype.slice.call(arguments, 2);
+    return intervalNative(function(){
+      if (paused) return;
+      fn.apply(null, extra);
+    }, ms);
+  };
+
+  function pause(){
+    if (paused) return;
+    paused = true;
+    document.documentElement.classList.add('deck-paused');
+  }
+
+  function resume(){
+    if (!paused) return;
+    paused = false;
+    document.documentElement.classList.remove('deck-paused');
+    var pending = queued;
+    queued = [];
+    for (var i = 0; i < pending.length; i++) rafNative(pending[i].cb);
+  }
+
+  window.addEventListener('message', function(e){
+    if (e.data === 'gift:pause') pause();
+    else if (e.data === 'gift:resume') resume();
+  });
+
+  /* CSS keyframes keep compositing even with the loops idle - stop those too. */
+  function addPauseStyle(){
+    var css = 'html.deck-paused *, html.deck-paused *::before, html.deck-paused *::after' +
+              '{ animation-play-state: paused !important; }';
+    var tag = document.createElement('style');
+    tag.appendChild(document.createTextNode(css));
+    (document.head || document.documentElement).appendChild(tag);
+  }
+  if (document.head) addPauseStyle();
+  else document.addEventListener('DOMContentLoaded', addPauseStyle);
+
+  /* The deck only resumes the visible slide, so start idle. */
+  pause();
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>LoveMe · Encrypted Protocol v3.0</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💖</text></svg>">
@@ -951,6 +1040,25 @@ function playCelestialChimes() {
 }
 
 /* ==========================================================================
+   THEME COLOUR CACHE
+   Every animation loop used to call getComputedStyle() on each frame just to
+   read --primary. That forces the browser to recalculate style 180 times a
+   second between three loops. The palette only changes when a theme dot is
+   tapped, so it is read then and cached here.
+   ========================================================================== */
+const LOW_POWER = window.matchMedia('(hover: none) and (pointer: coarse)').matches
+               || Math.min(window.innerWidth, window.innerHeight) < 820;
+
+const themeColors = { primary: "#ff2a8d", accent: "#ffb3d9" };
+
+function refreshThemeColors() {
+    const cs = getComputedStyle(document.documentElement);
+    themeColors.primary = cs.getPropertyValue('--primary').trim() || "#ff2a8d";
+    themeColors.accent = cs.getPropertyValue('--accent').trim() || "#ffb3d9";
+}
+refreshThemeColors();
+
+/* ==========================================================================
    TOP ECG MONITOR (Ultra-Lightweight 60fps)
    ========================================================================== */
 const ecgCanvas = document.getElementById("ecgCanvas");
@@ -968,8 +1076,7 @@ function drawECG() {
     ecgCtx.fillStyle = "rgba(0, 0, 0, 0.25)";
     ecgCtx.fillRect(0, 0, ecgCanvas.width, ecgCanvas.height);
 
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || "#ff2a8d";
-    ecgCtx.strokeStyle = primaryColor;
+    ecgCtx.strokeStyle = themeColors.primary;
     ecgCtx.lineWidth = 1.5;
 
     const time = Date.now() * 0.008 * (currentBpm / 72);
@@ -1061,7 +1168,7 @@ function drawMatrix() {
     mCtx.fillStyle = "rgba(4, 2, 6, 0.18)";
     mCtx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
 
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || "#ff2a8d";
+    const primaryColor = themeColors.primary;
     mCtx.font = `600 ${mFontSize}px 'Fira Code', monospace`;
 
     const phrases = getActivePhrases();
@@ -1100,7 +1207,7 @@ function drawMatrix() {
         }
     }
 }
-matrixIntervalId = setInterval(drawMatrix, 38);
+matrixIntervalId = setInterval(drawMatrix, LOW_POWER ? 52 : 38);
 
 /* ==========================================================================
    ULTRA-OPTIMIZED 3D PARTICLE HEART (Additive Blending · 60-120 FPS)
@@ -1109,7 +1216,7 @@ const heartCanvas = document.getElementById("heartCanvas");
 const hCtx = heartCanvas.getContext("2d");
 
 let particles = [];
-const TOTAL_PARTICLES = 1100; // Optimal performance & high density
+const TOTAL_PARTICLES = LOW_POWER ? 520 : 1100; // phones draw half the swarm
 let heartAngleX = 0, heartAngleY = 0;
 let targetHeartAngleX = 0, targetHeartAngleY = 0;
 let heartPulseScale = 1;
@@ -1184,8 +1291,8 @@ function renderHeart3D() {
     heartAngleX += (targetHeartAngleX - heartAngleX) * 0.05;
     heartAngleY += (targetHeartAngleY - heartAngleY) * 0.05;
 
-    const primaryColor = getComputedStyle(document.documentElement).getPropertyValue('--primary').trim() || "#ff2a8d";
-    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || "#ffb3d9";
+    const primaryColor = themeColors.primary;
+    const accentColor = themeColors.accent;
 
     const cx = heartCanvas.width / 2;
     const cy = heartCanvas.height * 0.42;
@@ -1249,6 +1356,7 @@ document.querySelectorAll(".themeDot").forEach(dot => {
         } else {
             document.documentElement.setAttribute("data-theme", theme);
         }
+        refreshThemeColors();
         playKeyClick(1200);
     });
 });
@@ -1571,17 +1679,6 @@ function fallbackCopy(text) {
 }
 </script>
 
-<!-- Embedded in the gift deck: tell the parent page it was touched, so the
-     global song can start on the first tap even though it lands in here. -->
-<script>
-(function(){
-  if (window.parent === window) return;
-  function tell(){ try { window.parent.postMessage('gift:touch', '*'); } catch (e) {} }
-  ['pointerdown','touchstart','click','keydown'].forEach(function(t){
-    document.addEventListener(t, tell, { capture: true, passive: true });
-  });
-})();
-</script>
 
 </body>
 </html>

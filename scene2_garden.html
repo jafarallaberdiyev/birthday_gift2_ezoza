@@ -2,6 +2,95 @@
 <html lang="en" data-theme="midnight">
 <head>
 <meta charset="UTF-8">
+<!-- ==========================================================================
+     GIFT DECK RUNTIME - loaded first, on purpose.
+     This scene is one slide of a horizontal deck. While it is off-screen it
+     must cost nothing, so this wraps requestAnimationFrame / setInterval
+     before any scene code runs and idles every loop until the deck says the
+     slide is visible. It also forwards the first touch up to the deck so the
+     global song can start, since taps inside an iframe never reach the parent.
+     Opened on its own (not inside the deck), this does nothing at all.
+     ========================================================================== -->
+<script>
+(function(){
+  if (window.parent === window) return;
+
+  /* ---- 1. let the deck know it was touched ---- */
+  function tell(){ try { window.parent.postMessage('gift:touch', '*'); } catch (e) {} }
+  ['pointerdown','touchstart','click','keydown'].forEach(function(t){
+    document.addEventListener(t, tell, { capture: true, passive: true });
+  });
+
+  /* ---- 2. freeze every animation loop while off-screen ---- */
+  var paused = false;
+  var queued = [];
+  var fakeId = -1;
+
+  var rafNative = window.requestAnimationFrame && window.requestAnimationFrame.bind(window);
+  var cafNative = window.cancelAnimationFrame && window.cancelAnimationFrame.bind(window);
+  if (rafNative) {
+    window.requestAnimationFrame = function(cb){
+      if (!paused) return rafNative(cb);
+      var id = fakeId--;
+      queued.push({ id: id, cb: cb });
+      return id;
+    };
+    window.cancelAnimationFrame = function(id){
+      if (typeof id === 'number' && id < 0) {
+        for (var i = 0; i < queued.length; i++) {
+          if (queued[i].id === id) { queued.splice(i, 1); return; }
+        }
+        return;
+      }
+      if (cafNative) cafNative(id);
+    };
+  }
+
+  var intervalNative = window.setInterval.bind(window);
+  window.setInterval = function(fn, ms){
+    if (typeof fn !== 'function') return intervalNative.apply(window, arguments);
+    var extra = Array.prototype.slice.call(arguments, 2);
+    return intervalNative(function(){
+      if (paused) return;
+      fn.apply(null, extra);
+    }, ms);
+  };
+
+  function pause(){
+    if (paused) return;
+    paused = true;
+    document.documentElement.classList.add('deck-paused');
+  }
+
+  function resume(){
+    if (!paused) return;
+    paused = false;
+    document.documentElement.classList.remove('deck-paused');
+    var pending = queued;
+    queued = [];
+    for (var i = 0; i < pending.length; i++) rafNative(pending[i].cb);
+  }
+
+  window.addEventListener('message', function(e){
+    if (e.data === 'gift:pause') pause();
+    else if (e.data === 'gift:resume') resume();
+  });
+
+  /* CSS keyframes keep compositing even with the loops idle - stop those too. */
+  function addPauseStyle(){
+    var css = 'html.deck-paused *, html.deck-paused *::before, html.deck-paused *::after' +
+              '{ animation-play-state: paused !important; }';
+    var tag = document.createElement('style');
+    tag.appendChild(document.createTextNode(css));
+    (document.head || document.documentElement).appendChild(tag);
+  }
+  if (document.head) addPauseStyle();
+  else document.addEventListener('DOMContentLoaded', addPauseStyle);
+
+  /* The deck only resumes the visible slide, so start idle. */
+  pause();
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>A living garden grew for you 🌸</title>
 <meta name="description" content="Someone planted something special for you.">
@@ -1609,17 +1698,6 @@ intro.addEventListener("click", playSequence);
 intro.addEventListener("keydown", e => {
   if(e.key === "Enter" || e.key === " "){ e.preventDefault(); playSequence(); }
 });
-</script>
-<!-- Embedded in the gift deck: tell the parent page it was touched, so the
-     global song can start on the first tap even though it lands in here. -->
-<script>
-(function(){
-  if (window.parent === window) return;
-  function tell(){ try { window.parent.postMessage('gift:touch', '*'); } catch (e) {} }
-  ['pointerdown','touchstart','click','keydown'].forEach(function(t){
-    document.addEventListener(t, tell, { capture: true, passive: true });
-  });
-})();
 </script>
 
 </body>
