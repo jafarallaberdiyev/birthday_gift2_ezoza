@@ -436,6 +436,21 @@ html[data-theme="morning"] #vignette,html[data-theme="vintage"] #vignette{
 }
 /* ---- Finished gift: creator tool hidden ---- */
 #createBtn, #sheet, #scrim { display: none !important; }
+/* The deck plays one continuous song, so the per-scene mute is redundant */
+#soundBtn { display: none !important; }
+
+/* ---- Embedded in the deck: this bar is anchored to the bottom edge by
+       padding, which put it straight behind the deck's navigation dots.
+       Lift it clear and centre what is left of it. ---- */
+#chrome{
+  padding: 0 18px calc(92px + env(safe-area-inset-bottom, 0px));
+  justify-content: center;
+}
+.chip-group{ justify-content: center; }
+#toast{ bottom: calc(158px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 600px){
+  #chrome{ padding: 0 12px calc(84px + env(safe-area-inset-bottom, 0px)); }
+}
 </style>
 </head>
 <body>

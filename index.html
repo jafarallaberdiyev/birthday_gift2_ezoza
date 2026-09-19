@@ -139,6 +139,140 @@
   }
   #letterSlide.active .replayRow{ opacity:1; }
 
+  /* ==========================================================
+     PHOTO ALBUM - lives under the letter on the last slide
+     ========================================================== */
+  .album{
+    margin-top:56px;
+    opacity:0; transform:translateY(12px);
+    transition:opacity 1s ease 1.25s, transform 1s ease 1.25s;
+  }
+  #letterSlide.active .album{ opacity:1; transform:translateY(0); }
+  .album[hidden]{ display:none; }
+
+  .albumHead{
+    display:flex; flex-direction:column; align-items:center; gap:14px;
+    margin-bottom:26px;
+    opacity:0; transition:opacity .9s ease;
+  }
+  .album.ready .albumHead{ opacity:1; }
+  .albumKicker{
+    font-family:var(--font-sans); font-size:10px; letter-spacing:.34em;
+    text-transform:uppercase; color:var(--gold);
+  }
+  .albumTitle{
+    font-family:var(--font-serif); font-style:italic; font-weight:500;
+    font-size:clamp(20px,4.4vw,26px); color:var(--ivory);
+  }
+  .albumRule{ width:44px; height:1px; background:var(--gold-glow); }
+
+  .albumGrid{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+    /* A wide photo pushes the row it cannot fit into; dense lets the next
+       small one fall back into the gap instead of leaving a hole. */
+    grid-auto-flow:dense;
+  }
+  @media (min-width:700px){
+    .albumGrid{ grid-template-columns:repeat(3, 1fr); gap:14px; }
+  }
+
+  .photo{
+    position:relative; display:block; padding:0; margin:0;
+    border:0; cursor:pointer; overflow:hidden;
+    border-radius:16px;
+    background:rgba(247,244,235,0.04);
+    aspect-ratio:3 / 4;
+    box-shadow:0 10px 30px rgba(0,0,0,0.45);
+    -webkit-tap-highlight-color:transparent;
+    opacity:0; transform:translateY(14px) scale(0.98);
+    transition:opacity .7s var(--spring), transform .7s var(--spring);
+  }
+  .photo.in{ opacity:1; transform:none; }
+  .photo.wide{ grid-column:span 2; aspect-ratio:16 / 7; }
+  /* The closing photo, widened so the mosaic never ends on half a row */
+  .photo.closer{ grid-column:span 2; aspect-ratio:5 / 4; }
+  @media (min-width:700px){
+    .photo.wide{ grid-column:span 3; aspect-ratio:21 / 8; }
+  }
+  .photo img{
+    width:100%; height:100%; object-fit:cover; display:block;
+    transition:transform .6s var(--spring), filter .6s ease;
+  }
+  /* A whisper of gold at the edge, like a printed border */
+  .photo::after{
+    content:''; position:absolute; inset:0; border-radius:16px; pointer-events:none;
+    box-shadow:inset 0 0 0 1px rgba(247,244,235,0.10);
+    transition:box-shadow .35s ease;
+  }
+  .photo:hover img{ transform:scale(1.05); }
+  .photo:hover::after{ box-shadow:inset 0 0 0 1px var(--gold-glow); }
+  .photo:active{ transform:scale(0.975); }
+
+  /* ---------- Full-screen viewer ---------- */
+  .lightbox{
+    position:fixed; inset:0; z-index:120;
+    display:flex; flex-direction:column;
+    background:rgba(4,4,6,0.92);
+    backdrop-filter:blur(22px) saturate(140%);
+    -webkit-backdrop-filter:blur(22px) saturate(140%);
+    opacity:0; visibility:hidden;
+    transition:opacity .35s ease, visibility .35s ease;
+  }
+  .lightbox.open{ opacity:1; visibility:visible; }
+
+  .lbBar{
+    position:relative; z-index:2;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 10px;
+  }
+  .lbCount{
+    font-family:var(--font-sans); font-size:11px; letter-spacing:.2em;
+    color:var(--ivory-dim); font-variant-numeric:tabular-nums;
+    padding:8px 14px; border-radius:999px;
+    background:var(--glass-bg); border:1px solid var(--glass-line);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+  }
+  .lbClose{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:20px; line-height:1; color:var(--ivory); cursor:pointer;
+    background:var(--glass-bg); border:1px solid var(--glass-line);
+    backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
+    transition:transform .25s var(--spring-bounce), color .25s ease;
+  }
+  .lbClose:active{ transform:scale(0.88); }
+
+  /* Same native snapping as the deck itself, so the gesture feels identical */
+  .lbTrack{
+    flex:1; min-height:0;
+    display:flex; align-items:stretch;
+    overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type:x mandatory;
+    overscroll-behavior:contain;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .lbTrack::-webkit-scrollbar{ display:none; }
+  .lbSlide{
+    flex:0 0 100%; width:100%;
+    scroll-snap-align:center; scroll-snap-stop:always;
+    display:flex; align-items:center; justify-content:center;
+    padding:0 16px;
+  }
+  .lbSlide img{
+    max-width:100%; max-height:100%;
+    object-fit:contain; border-radius:14px;
+    box-shadow:0 30px 80px rgba(0,0,0,0.6);
+  }
+  .lbFoot{
+    min-height:58px; padding:14px 24px calc(18px + env(safe-area-inset-bottom, 0px));
+    text-align:center;
+    font-family:var(--font-serif); font-style:italic;
+    font-size:15px; color:var(--ivory-dim);
+  }
+
   /* Glass pill buttons */
   .replayBtn{
     font-family:var(--font-sans); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
@@ -242,25 +376,25 @@
 <div id="stageWrap">
 
   <section class="slide active" id="slide0" data-title="Bloom">
-    <iframe data-src="scene1_bloom.html?v=2" title="Bloom" allow="autoplay" loading="eager"></iframe>
+    <iframe data-src="scene1_bloom.html?v=3" title="Bloom" allow="autoplay" loading="eager"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
 
   <section class="slide" id="slide1" data-title="Garden">
-    <iframe data-src="scene2_garden.html?v=2" title="A Living Garden" allow="autoplay"></iframe>
+    <iframe data-src="scene2_garden.html?v=3" title="A Living Garden" allow="autoplay"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
 
   <section class="slide" id="slide2" data-title="Message">
-    <iframe data-src="scene3_loveme.html?v=2" title="Encrypted Message" allow="autoplay"></iframe>
+    <iframe data-src="scene3_loveme.html?v=3" title="Encrypted Message" allow="autoplay"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
 
   <section class="slide" id="slide3" data-title="Sanctuary">
-    <iframe data-src="scene4_butterflies.html?v=2" title="Butterfly Sanctuary" allow="autoplay"></iframe>
+    <iframe data-src="scene4_butterflies.html?v=3" title="Butterfly Sanctuary" allow="autoplay"></iframe>
     <div class="swipeRail left" aria-hidden="true"></div>
     <div class="swipeRail right" aria-hidden="true"></div>
   </section>
@@ -279,6 +413,14 @@
           <p>Happy birthday, my angel. ❤️<br>I'm so lucky to have you in my life.</p>
         </div>
         <div class="signoff">— Ja'far</div>
+
+        <section class="album" id="album" aria-label="Photo album">
+          <div class="albumHead">
+            <span class="albumKicker">you</span>
+            <span class="albumRule"></span>
+          </div>
+          <div class="albumGrid" id="albumGrid"></div>
+        </section>
         <div class="replayRow">
           <button class="replayBtn" id="songToggleBtn">🎵 Pause song</button>
           <button class="replayBtn" id="replayAllBtn">↺ Watch it again</button>
@@ -290,6 +432,15 @@
 </div>
 
 <audio id="finaleSong" src="love-lana-del-rey.mp3" preload="auto" loop></audio>
+
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer" aria-hidden="true">
+  <div class="lbBar">
+    <span class="lbCount" id="lbCount">1 / 1</span>
+    <button class="lbClose" id="lbClose" aria-label="Close photo">&times;</button>
+  </div>
+  <div class="lbTrack" id="lbTrack"></div>
+  <div class="lbFoot" id="lbCaption"></div>
+</div>
 
 <div id="swipeHint"><span>Swipe or tap</span><span class="chev">›</span></div>
 
@@ -584,8 +735,175 @@
     setTimeout(function(){ swipeHint.classList.remove('show'); }, 9000);
   }
 
+  /* ================= Photo album =================
+     Drop the pictures into a "photos" folder next to this file, named exactly
+     as below. To add, remove or reorder them, edit this one list - the grid,
+     the viewer and the counter all follow it. A "caption" shows under the
+     photo in the full-screen viewer; leave it empty for none. Mark the one
+     wide picture with wide:true and it spans the full row.
+     A file that is missing simply drops out, so the gift never shows a broken
+     image, and if none of them load the whole album stays hidden. */
+  var PHOTOS = [
+    { src: 'photos/01.jpg', caption: '' },
+    { src: 'photos/02.jpg', caption: '' },
+    { src: 'photos/03.jpg', caption: '' },
+    { src: 'photos/04.jpg', caption: '', wide: true },
+    { src: 'photos/05.jpg', caption: '' },
+    { src: 'photos/06.jpg', caption: '' },
+    { src: 'photos/07.jpg', caption: '' },
+    { src: 'photos/08.jpg', caption: '' }
+  ];
+
+  var album = document.getElementById('album');
+  var albumGrid = document.getElementById('albumGrid');
+  var lightbox = document.getElementById('lightbox');
+  var lbTrack = document.getElementById('lbTrack');
+  var lbCount = document.getElementById('lbCount');
+  var lbCaption = document.getElementById('lbCaption');
+  var lbClose = document.getElementById('lbClose');
+  var livePhotos = [];   // only the ones that actually loaded
+  var lbIndex = 0;
+
+  function buildAlbum(){
+    if (!album || !PHOTOS.length) return;
+
+    var revealer = ('IntersectionObserver' in window)
+      ? new IntersectionObserver(function(entries){
+          entries.forEach(function(entry){
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in');
+              revealer.unobserve(entry.target);
+            }
+          });
+        }, { root: slides[total - 1], rootMargin: '0px 0px -8% 0px', threshold: 0.12 })
+      : null;
+
+    PHOTOS.forEach(function(photo, i){
+      var tile = document.createElement('button');
+      tile.type = 'button';
+      tile.className = 'photo' + (photo.wide ? ' wide' : '');
+      tile.setAttribute('aria-label', photo.caption || ('Photo ' + (i + 1)));
+
+      var img = document.createElement('img');
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.alt = photo.caption || '';
+      img.src = photo.src;
+
+      // A photo that isn't there takes its tile with it, quietly.
+      img.addEventListener('error', function(){
+        tile.remove();
+        var at = livePhotos.indexOf(photo);
+        if (at !== -1) livePhotos.splice(at, 1);
+        if (!livePhotos.length) album.hidden = true; // nothing to show at all
+      });
+      img.addEventListener('load', function(){
+        album.classList.add('ready');
+        if (revealer) revealer.observe(tile); else tile.classList.add('in');
+      });
+
+      tile.appendChild(img);
+      tile.addEventListener('click', function(){ openLightbox(photo); });
+      albumGrid.appendChild(tile);
+      livePhotos.push(photo);
+    });
+
+    // Two columns, and a wide photo eats two of them. If that leaves an odd
+    // number of cells the last row would sit half empty, so the final photo
+    // widens to close the mosaic off.
+    var cells = PHOTOS.reduce(function(n, photo){ return n + (photo.wide ? 2 : 1); }, 0);
+    var lastTile = albumGrid.lastElementChild;
+    if (cells % 2 && lastTile && !lastTile.classList.contains('wide')) {
+      lastTile.classList.add('closer');
+    }
+  }
+
+  /* ---------- full-screen viewer ---------- */
+  function buildLightboxSlides(){
+    lbTrack.innerHTML = '';
+    livePhotos.forEach(function(photo){
+      var slide = document.createElement('div');
+      slide.className = 'lbSlide';
+      var img = document.createElement('img');
+      img.loading = 'lazy';
+      img.decoding = 'async';
+      img.alt = photo.caption || '';
+      img.src = photo.src;
+      slide.appendChild(img);
+      lbTrack.appendChild(slide);
+    });
+  }
+
+  function paintLightboxChrome(){
+    lbCount.textContent = (lbIndex + 1) + ' / ' + livePhotos.length;
+    var photo = livePhotos[lbIndex];
+    lbCaption.textContent = (photo && photo.caption) || '';
+  }
+
+  function openLightbox(photo){
+    lbIndex = Math.max(0, livePhotos.indexOf(photo));
+    buildLightboxSlides();
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    // Jump to the tapped photo before the fade finishes, with no animation.
+    // Set synchronously (the track already has layout) and again on the next
+    // frame, in case the snap engine re-anchors once the slides are painted.
+    lbTrack.scrollLeft = lbIndex * lbTrack.clientWidth;
+    paintLightboxChrome();
+    requestAnimationFrame(function(){
+      lbTrack.scrollLeft = lbIndex * lbTrack.clientWidth;
+      paintLightboxChrome();
+    });
+  }
+
+  function closeLightbox(){
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    // Let the fade finish, then drop the full-size images from memory.
+    setTimeout(function(){
+      if (!lightbox.classList.contains('open')) lbTrack.innerHTML = '';
+    }, 400);
+  }
+
+  if (lbClose) lbClose.addEventListener('click', closeLightbox);
+  if (lightbox) {
+    lightbox.addEventListener('click', function(e){
+      // Tapping the dimmed area closes; tapping the photo itself does not.
+      if (e.target === lightbox || e.target.classList.contains('lbSlide')) closeLightbox();
+    });
+  }
+
+  var lbTicking = false;
+  if (lbTrack) {
+    lbTrack.addEventListener('scroll', function(){
+      if (lbTicking) return;
+      lbTicking = true;
+      requestAnimationFrame(function(){
+        lbTicking = false;
+        var w = lbTrack.clientWidth || 1;
+        var i = Math.round(lbTrack.scrollLeft / w);
+        if (i !== lbIndex && i >= 0 && i < livePhotos.length) {
+          lbIndex = i;
+          paintLightboxChrome();
+        }
+      });
+    }, { passive: true });
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (!lightbox || !lightbox.classList.contains('open')) return;
+    if (e.key === 'Escape') { closeLightbox(); return; }
+    if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      var next = lbIndex + (e.key === 'ArrowRight' ? 1 : -1);
+      next = Math.max(0, Math.min(livePhotos.length - 1, next));
+      lbTrack.scrollTo({ left: next * lbTrack.clientWidth, behavior: 'smooth' });
+    }
+  });
+
   /* ================= Boot ================= */
   loadNeighbors(0);
+  buildAlbum();
   updateArrows();
   stage.scrollLeft = 0;
   applyDepth();
