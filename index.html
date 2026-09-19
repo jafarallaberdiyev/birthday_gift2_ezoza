@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>For E'zoza 🌸</title>
+<meta name="theme-color" content="#0E0E10">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&family=Plus+Jakarta+Sans:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --font-serif: 'Cormorant Garamond', Garamond, Georgia, serif;
+    --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --ivory:#F7F4EB;
+    --ivory-dim: rgba(247,244,235,0.55);
+    --ivory-faint: rgba(247,244,235,0.22);
+    --night:#0E0E10;
+    --night-deep:#070709;
+    --gold:#E5C384;
+    --gold-glow: rgba(229,195,132,0.35);
+    --spring: cubic-bezier(.32,.72,0,1);
+    /* Overshoot curve - the active dot "springs" open into its pill */
+    --spring-bounce: cubic-bezier(.34,1.56,.64,1);
+    /* iOS glass tokens */
+    --glass-bg: rgba(22,22,28,0.42);
+    --glass-bg-solid: rgba(16,16,21,0.88);
+    --glass-line: rgba(247,244,235,0.14);
+    --glass-shadow: 0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.10);
+    --glass-blur: blur(20px) saturate(180%);
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{
+    width:100%; height:100%; overflow:hidden; position:fixed; inset:0;
+    background:var(--night-deep); color:var(--ivory); font-family:var(--font-sans);
+  }
+
+  /* ----------------------------------------------------------------
+     THE STAGE - native horizontal scroll snapping.
+     The browser owns the gesture now, so a swipe that starts on top of
+     an iframe is handled by the compositor instead of by JS.
+     ---------------------------------------------------------------- */
+  #stageWrap{
+    position:fixed; inset:0;
+    display:flex; flex-direction:row; align-items:stretch;
+    overflow-x:auto; overflow-y:hidden;
+    scroll-snap-type: x mandatory;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width:none; -ms-overflow-style:none;
+  }
+  #stageWrap::-webkit-scrollbar{ display:none; width:0; height:0; }
+
+  .slide{
+    position:relative;
+    flex:0 0 100%; width:100%; height:100%;
+    overflow:hidden;
+    scroll-snap-align:center;
+    scroll-snap-stop:always;
+    transform-origin:50% 50%;
+    backface-visibility:hidden;
+  }
+
+  .slide iframe{
+    position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--night-deep);
+  }
+
+  /* Edge rails: thin strips of the PARENT document laid over the iframe
+     slides. Scenes that claim their own touches (the WebGL garden, the 3D
+     butterflies) cannot swallow a swipe that starts here, so there is
+     always somewhere to swipe from. */
+  .swipeRail{
+    position:absolute; top:0; bottom:0; width:46px; z-index:6;
+  }
+  .swipeRail.left{ left:0; }
+  .swipeRail.right{ right:0; }
+
+  /* ---------------- Letter slide ---------------- */
+  #letterSlide{
+    overflow-y:auto; overflow-x:hidden; -webkit-overflow-scrolling:touch;
+    background:
+      radial-gradient(circle at 50% 15%, rgba(229,195,132,0.10) 0%, transparent 55%),
+      linear-gradient(180deg, #0b0b0d 0%, #07070a 60%, #050506 100%);
+  }
+  #letterSlide .letterInner{
+    min-height:100%;
+    display:flex; align-items:center; justify-content:center;
+    padding: 88px 24px 150px;
+  }
+  #letterSlide .letterCard{
+    max-width:600px; width:100%;
+    text-align:center;
+  }
+  #letterSlide .kicker{
+    font-family:var(--font-sans);
+    font-size:11px; letter-spacing:.28em; text-transform:uppercase;
+    color:var(--gold); opacity:0; transform:translateY(8px);
+    transition:opacity .8s ease .1s, transform .8s ease .1s;
+  }
+  #letterSlide .to-line{
+    font-family:var(--font-serif); font-weight:500; font-style:italic;
+    font-size:clamp(26px,6vw,38px); margin-top:18px; color:var(--ivory);
+    opacity:0; transform:translateY(10px);
+    transition:opacity .8s ease .25s, transform .8s ease .25s;
+  }
+  #letterSlide .rule{
+    width:56px; height:1px; background:var(--gold-glow); margin:26px auto;
+    opacity:0; transition:opacity 1s ease .4s;
+  }
+  #letterSlide .body-text{
+    font-family:var(--font-serif); font-weight:400;
+    font-size:clamp(17px,2.6vw,21px); line-height:1.75;
+    color:var(--ivory-dim);
+    opacity:0; transform:translateY(10px);
+    transition:opacity .9s ease .55s, transform .9s ease .55s;
+  }
+  #letterSlide .body-text p{ margin:0 0 1.35em; }
+  #letterSlide .body-text p:last-child{ margin-bottom:0; }
+  #letterSlide .signoff{
+    font-family:var(--font-serif); font-style:italic; font-weight:500;
+    font-size:clamp(20px,3.4vw,26px); color:var(--gold);
+    margin-top:34px;
+    opacity:0; transform:translateY(10px);
+    transition:opacity .9s ease .85s, transform .9s ease .85s;
+  }
+  #letterSlide.active .kicker,
+  #letterSlide.active .to-line,
+  #letterSlide.active .rule,
+  #letterSlide.active .body-text,
+  #letterSlide.active .signoff{
+    opacity:1; transform:translateY(0);
+  }
+  #letterSlide .replayRow{
+    margin-top:52px;
+    display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap;
+    opacity:0; transition:opacity 1s ease 1.1s;
+  }
+  #letterSlide.active .replayRow{ opacity:1; }
+
+  /* Glass pill buttons */
+  .replayBtn{
+    font-family:var(--font-sans); font-size:12px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ivory); cursor:pointer;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-line);
+    border-radius:999px; padding:13px 24px;
+    backdrop-filter:var(--glass-blur);
+    -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+    transition:border-color .3s ease, color .3s ease, background .3s ease, transform .25s var(--spring-bounce);
+  }
+  .replayBtn:hover{ border-color:var(--gold-glow); color:var(--gold); background:rgba(40,36,28,0.46); }
+  .replayBtn:active{ transform:scale(0.94); }
+
+  /* ---------------- Navigation chrome (glass) ---------------- */
+  #navDots{
+    position:fixed; left:50%; bottom:calc(18px + env(safe-area-inset-bottom, 0px));
+    transform:translateX(-50%);
+    display:flex; align-items:center; gap:10px; z-index:50;
+    padding:12px 18px; border-radius:999px;
+    background:var(--glass-bg);
+    backdrop-filter:var(--glass-blur);
+    -webkit-backdrop-filter:var(--glass-blur);
+    border:1px solid var(--glass-line);
+    box-shadow:var(--glass-shadow);
+  }
+  .navDot{
+    width:8px; height:8px; border-radius:999px;
+    background:rgba(247,244,235,0.30); border:0; cursor:pointer; padding:0;
+    transition: width .55s var(--spring-bounce),
+                background .35s ease,
+                box-shadow .35s ease,
+                transform .2s ease;
+  }
+  .navDot.active{
+    width:26px;
+    background:var(--gold);
+    box-shadow:0 0 14px var(--gold-glow);
+  }
+  .navDot:active{ transform:scale(0.75); }
+
+  .navArrow{
+    position:fixed; top:50%; transform:translateY(-50%);
+    width:44px; height:44px; border-radius:50%;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-line);
+    color:var(--ivory); font-size:19px; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; z-index:50;
+    backdrop-filter:var(--glass-blur);
+    -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+    transition:opacity .3s ease, color .3s ease, border-color .3s ease, transform .25s var(--spring-bounce);
+    opacity:0.7;
+  }
+  .navArrow:hover{ opacity:1; color:var(--gold); border-color:var(--gold-glow); }
+  .navArrow:active{ transform:translateY(-50%) scale(0.86); }
+  #prevArrow{ left:14px; }
+  #nextArrow{ right:14px; }
+
+  /* Graceful fallback where backdrop-filter is unsupported */
+  @supports not ((backdrop-filter: blur(20px)) or (-webkit-backdrop-filter: blur(20px))){
+    #navDots, .navArrow, .replayBtn{ background:var(--glass-bg-solid); }
+  }
+
+  @media (max-width:640px){
+    .navArrow{ width:38px; height:38px; font-size:17px; }
+    #navDots{ bottom:calc(12px + env(safe-area-inset-bottom, 0px)); gap:9px; padding:10px 15px; }
+  }
+
+  /* ---------------- First-time swipe hint ---------------- */
+  #swipeHint{
+    position:fixed; left:50%; bottom:calc(84px + env(safe-area-inset-bottom, 0px));
+    transform:translateX(-50%);
+    font-family:var(--font-sans); font-size:11px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--ivory-dim); z-index:49; pointer-events:none;
+    opacity:0; transition:opacity .8s ease;
+    display:flex; align-items:center; gap:8px;
+  }
+  #swipeHint.show{ opacity:0.85; }
+  #swipeHint .chev{ display:inline-block; animation:hintNudge 1.6s ease-in-out infinite; color:var(--gold); }
+  @keyframes hintNudge{
+    0%,100%{ transform:translateX(0); }
+    50%{ transform:translateX(5px); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .navDot{ transition:background .35s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stageWrap">
+
+  <section class="slide active" id="slide0" data-title="Bloom">
+    <iframe data-src="scene1_bloom.html" title="Bloom" allow="autoplay" loading="eager"></iframe>
+    <div class="swipeRail left" aria-hidden="true"></div>
+    <div class="swipeRail right" aria-hidden="true"></div>
+  </section>
+
+  <section class="slide" id="slide1" data-title="Garden">
+    <iframe data-src="scene2_garden.html" title="A Living Garden" allow="autoplay"></iframe>
+    <div class="swipeRail left" aria-hidden="true"></div>
+    <div class="swipeRail right" aria-hidden="true"></div>
+  </section>
+
+  <section class="slide" id="slide2" data-title="Message">
+    <iframe data-src="scene3_loveme.html" title="Encrypted Message" allow="autoplay"></iframe>
+    <div class="swipeRail left" aria-hidden="true"></div>
+    <div class="swipeRail right" aria-hidden="true"></div>
+  </section>
+
+  <section class="slide" id="slide3" data-title="Sanctuary">
+    <iframe data-src="scene4_butterflies.html" title="Butterfly Sanctuary" allow="autoplay"></iframe>
+    <div class="swipeRail left" aria-hidden="true"></div>
+    <div class="swipeRail right" aria-hidden="true"></div>
+  </section>
+
+  <section class="slide" id="letterSlide" data-title="Letter">
+    <div class="letterInner">
+      <div class="letterCard">
+        <div class="kicker">Happy Birthday</div>
+        <h1 class="to-line">My dearest E'zoza,</h1>
+        <div class="rule"></div>
+        <div class="body-text">
+          <p>Happy birthday, my love. I hope this little surprise made you smile, even just a little.</p>
+          <p>Since you came into my life, so many simple moments have become special to me — your smile, your eyes, your voice, the way you laugh, and even all the little things you probably don't think much about.</p>
+          <p>I'm so happy that I met you. I don't know what the future holds for us, but I know I want to be by your side — to make you smile, to take care of you, and to build as many beautiful memories with you as we possibly can.</p>
+          <p>You deserve to feel loved, appreciated, and happy — not only on your birthday, but every single day.</p>
+          <p>Happy birthday, my angel. ❤️<br>I'm so lucky to have you in my life.</p>
+        </div>
+        <div class="signoff">— Ja'far</div>
+        <div class="replayRow">
+          <button class="replayBtn" id="songToggleBtn">🎵 Pause song</button>
+          <button class="replayBtn" id="replayAllBtn">↺ Watch it again</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<audio id="finaleSong" src="love-lana-del-rey.mp3" preload="auto" loop></audio>
+
+<div id="swipeHint"><span>Swipe or tap</span><span class="chev">›</span></div>
+
+<button class="navArrow" id="prevArrow" aria-label="Previous">‹</button>
+<button class="navArrow" id="nextArrow" aria-label="Next">›</button>
+
+<nav id="navDots">
+  <button class="navDot active" data-index="0" title="Bloom"></button>
+  <button class="navDot" data-index="1" title="Garden"></button>
+  <button class="navDot" data-index="2" title="Message"></button>
+  <button class="navDot" data-index="3" title="Sanctuary"></button>
+  <button class="navDot" data-index="4" title="Letter"></button>
+</nav>
+
+<script>
+(function(){
+  'use strict';
+
+  var stage = document.getElementById('stageWrap');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var dots = Array.prototype.slice.call(document.querySelectorAll('.navDot'));
+  var prevArrow = document.getElementById('prevArrow');
+  var nextArrow = document.getElementById('nextArrow');
+  var swipeHint = document.getElementById('swipeHint');
+  var current = 0;
+  var total = slides.length;
+  var hasNavigated = false;
+
+  /* ================= Lazy iframe loading ================= */
+  function loadSlide(el){
+    var frame = el && el.querySelector('iframe');
+    if (frame && !frame.getAttribute('src') && frame.dataset.src) {
+      frame.setAttribute('src', frame.dataset.src);
+    }
+  }
+  function loadNeighbors(index){
+    loadSlide(slides[index - 1]);
+    loadSlide(slides[index]);
+    loadSlide(slides[index + 1]);
+  }
+
+  /* ================= Continuous global audio =================
+     The song is no longer tied to the letter slide. Browsers only allow
+     playback after a genuine gesture, and the very first thing she touches
+     is a scene inside an iframe - those taps never reach this document.
+     So the song is started from four directions, whichever comes first:
+       1. a tap / click / key on this page (dots, arrows, edge rails, letter)
+       2. the same events inside a scene, when the scene is same-origin
+       3. a "gift:touch" message a scene posts up to us
+       4. a poll on navigator.userActivation, which the browser propagates
+          to this frame even when the gesture happened inside a child
+     Nothing is disarmed until playback has actually begun, so a blocked
+     first attempt simply retries on the next gesture. */
+  var song = document.getElementById('finaleSong');
+  var songToggleBtn = document.getElementById('songToggleBtn');
+  var songUserPaused = false;
+
+  function updateSongBtnLabel(){
+    if (!songToggleBtn) return;
+    songToggleBtn.textContent = (song.paused ? '🎵 Play song' : '🎵 Pause song');
+  }
+
+  function tryPlaySong(){
+    if (songUserPaused) return;
+    var p = song.play();
+    if (p && p.catch) {
+      p.catch(function(){
+        // Still blocked - the button on the letter lets her start it by hand.
+      }).then(updateSongBtnLabel);
+    } else {
+      updateSongBtnLabel();
+    }
+  }
+
+  var PRIME_EVENTS = ['pointerdown', 'touchstart', 'click', 'keydown'];
+  var audioPrimed = false;
+  var activationPoll = null;
+
+  function disarmPrimers(){
+    PRIME_EVENTS.forEach(function(type){
+      document.body.removeEventListener(type, primeAudio, true);
+    });
+    window.removeEventListener('message', onSceneMessage);
+    if (activationPoll) { clearInterval(activationPoll); activationPoll = null; }
+  }
+
+  function primeAudio(){
+    if (audioPrimed || songUserPaused) return;
+    var p = song.play();
+    if (p && p.then) {
+      p.then(function(){
+        audioPrimed = true;
+        disarmPrimers();
+        updateSongBtnLabel();
+      }, function(){
+        // Blocked for now - stay armed and try again on the next gesture.
+        updateSongBtnLabel();
+      });
+    } else {
+      audioPrimed = true;
+      disarmPrimers();
+      updateSongBtnLabel();
+    }
+  }
+
+  function onSceneMessage(e){
+    if (e && e.data === 'gift:touch') primeAudio();
+  }
+
+  // 1. gestures on this page
+  PRIME_EVENTS.forEach(function(type){
+    document.body.addEventListener(type, primeAudio, { capture: true, passive: true });
+  });
+
+  // 2. gestures inside a scene, when we're allowed to reach into it
+  function hookFrame(frame){
+    try {
+      var doc = frame.contentDocument;
+      if (!doc || doc.__giftAudioHooked) return;
+      doc.__giftAudioHooked = true;
+      PRIME_EVENTS.forEach(function(type){
+        doc.addEventListener(type, primeAudio, { capture: true, passive: true });
+      });
+    } catch (err) {
+      // Cross-origin (opening the folder straight from disk) - 3 and 4 cover it.
+    }
+  }
+  Array.prototype.forEach.call(document.querySelectorAll('.slide iframe'), function(frame){
+    frame.addEventListener('load', function(){ hookFrame(frame); });
+    hookFrame(frame);
+  });
+
+  // 3. a scene telling us it was touched
+  window.addEventListener('message', onSceneMessage);
+
+  // 4. user activation the browser handed up to us from a child frame
+  activationPoll = setInterval(function(){
+    if (audioPrimed) { disarmPrimers(); return; }
+    var ua = navigator.userActivation;
+    if (ua && ua.hasBeenActive) primeAudio();
+  }, 400);
+
+  if (songToggleBtn) {
+    songToggleBtn.addEventListener('click', function(){
+      if (song.paused) {
+        songUserPaused = false;
+        tryPlaySong();
+      } else {
+        songUserPaused = true;
+        song.pause();
+      }
+      updateSongBtnLabel();
+    });
+  }
+  song.addEventListener('play', updateSongBtnLabel);
+  song.addEventListener('pause', updateSongBtnLabel);
+
+  /* ================= Navigation state ================= */
+  function updateArrows(){
+    prevArrow.style.visibility = (current === 0) ? 'hidden' : 'visible';
+    nextArrow.style.visibility = (current === total - 1) ? 'hidden' : 'visible';
+  }
+
+  function setActive(index){
+    if (index < 0 || index >= total) return;
+    current = index;
+    loadNeighbors(index);
+    slides.forEach(function(s, i){ s.classList.toggle('active', i === index); });
+    dots.forEach(function(d, i){ d.classList.toggle('active', i === index); });
+    updateArrows();
+    if (!hasNavigated && index !== 0) {
+      hasNavigated = true;
+      swipeHint.classList.remove('show');
+    }
+  }
+
+  // Scrolling is native now, so "go to slide N" is just a scroll request.
+  function goTo(index, instant){
+    index = Math.max(0, Math.min(total - 1, index));
+    var left = index * stage.clientWidth;
+    if (instant || !stage.scrollTo) {
+      stage.scrollLeft = left;
+    } else {
+      stage.scrollTo({ left: left, behavior: 'smooth' });
+    }
+  }
+
+  /* ================= IntersectionObserver -> active slide =================
+     The observer watches the slides inside the scroll container and reports
+     whichever one owns more than half of it. */
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+          setActive(slides.indexOf(entry.target));
+        }
+      });
+    }, { root: stage, threshold: [0.5, 0.75, 1] });
+
+    slides.forEach(function(s){ io.observe(s); });
+  }
+
+  /* ================= Scroll-linked depth (iOS app-switcher feel) =================
+     On every frame of a swipe, each slide is scaled and faded by how far its
+     own snap position sits from the live scroll offset. */
+  var ticking = false;
+
+  function applyDepth(){
+    ticking = false;
+    var w = stage.clientWidth || 1;
+    var sl = stage.scrollLeft;
+    for (var i = 0; i < total; i++) {
+      var d = Math.min(1, Math.abs(i * w - sl) / w); // 0 = centred, 1 = a full slide away
+      var s = slides[i];
+      s.style.transform = 'scale(' + (1 - d * 0.12).toFixed(4) + ')';
+      s.style.opacity = (1 - d * 0.45).toFixed(3);
+      s.style.borderRadius = (d * 26).toFixed(1) + 'px';
+    }
+  }
+
+  function onScroll(){
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(applyDepth);
+    }
+    // Safety net for browsers without IntersectionObserver
+    if (!('IntersectionObserver' in window)) {
+      var idx = Math.round(stage.scrollLeft / (stage.clientWidth || 1));
+      if (idx !== current) setActive(idx);
+    }
+  }
+  stage.addEventListener('scroll', onScroll, { passive: true });
+
+  /* ================= Controls ================= */
+  dots.forEach(function(dot){
+    dot.addEventListener('click', function(){ goTo(parseInt(dot.dataset.index, 10)); });
+  });
+  prevArrow.addEventListener('click', function(){ goTo(current - 1); });
+  nextArrow.addEventListener('click', function(){ goTo(current + 1); });
+
+  document.addEventListener('keydown', function(e){
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') goTo(current + 1);
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(current - 1);
+  });
+
+  document.getElementById('replayAllBtn').addEventListener('click', function(){
+    goTo(0);
+  });
+
+  // A width change moves every snap point, so re-anchor on the current slide.
+  var resizeRaf = null;
+  window.addEventListener('resize', function(){
+    if (resizeRaf) cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(function(){
+      stage.scrollLeft = current * stage.clientWidth;
+      applyDepth();
+    });
+  });
+
+  /* ================= Swipe hint ================= */
+  function armSwipeHint(){
+    setTimeout(function(){
+      if (!hasNavigated) swipeHint.classList.add('show');
+    }, 2600);
+    setTimeout(function(){ swipeHint.classList.remove('show'); }, 9000);
+  }
+
+  /* ================= Boot ================= */
+  loadNeighbors(0);
+  updateArrows();
+  stage.scrollLeft = 0;
+  applyDepth();
+  armSwipeHint();
+  // Harmless if the browser still wants a gesture - the primers stay armed.
+  primeAudio();
+})();
+</script>
+</body>
+</html>
