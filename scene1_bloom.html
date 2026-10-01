@@ -1509,6 +1509,7 @@
       color: rgba(247, 244, 235, 0.55);
       text-align: center;
     }
+    #keepsakeModalOverlay .card-actions-grid { grid-template-columns: 1fr; }
     /* Long-press save needs the real image under the finger on iOS */
     #keepsakeCardImg { -webkit-touch-callout: default; -webkit-user-select: auto; user-select: auto; }
 
@@ -1871,14 +1872,6 @@
           </svg>
           <span>Save to Photos</span>
         </button>
-        <button class="pill-btn pill-btn-primary" id="shareInstagramBtn">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="2" y="2" width="20" height="20" rx="5.5"></rect>
-            <circle cx="12" cy="12" r="4.2"></circle>
-            <circle cx="17.6" cy="6.4" r="1.1" fill="currentColor" stroke="none"></circle>
-          </svg>
-          <span>Share to Instagram</span>
-        </button>
       </div>
       <p class="keepsake-hint" id="keepsakeHint">Or touch and hold the card above, then tap "Save to Photos".</p>
     </div>
@@ -2073,7 +2066,6 @@
         keepsakeCardImg: document.getElementById('keepsakeCardImg'),
         closeKeepsakeModalBtn: document.getElementById('closeKeepsakeModalBtn'),
         downloadCardBtn: document.getElementById('downloadCardBtn'),
-        shareInstagramBtn: document.getElementById('shareInstagramBtn'),
         soundToggle: document.getElementById('soundToggle'),
         soundMutedIcon: document.getElementById('soundMutedIcon'),
         soundActiveIcon: document.getElementById('soundActiveIcon'),
@@ -2651,6 +2643,11 @@
           { key: 'cream',     base: '#F8E6D8', heart: '#F5C96A' },
           { key: 'fuchsia',   base: '#D9578C', heart: '#FFE39B' }
         ],
+        // The dark lily from the bouquet's centre: wine-black tepals that
+        // glow burgundy at the throat, with bright orange pollen.
+        darkLily: [
+          { key: 'midnight', base: '#420B25', heart: '#F27A2E' }
+        ],
         lily: [
           { key: 'creamPink', base: '#F3B8C4', heart: '#F7E7C9' },
           { key: 'blush',     base: '#F0A8BC', heart: '#FBEFD8' },
@@ -2746,7 +2743,7 @@
               { type: 'rose', layer: 'mid', x: W * 0.16, y: H, targetH: H * 0.62, curve: -110, scale: 1.08, swayClass: 'swaying-a', delay: 1.8 },
               { type: 'peony', layer: 'mid', x: W * 0.84, y: H, targetH: H * 0.61, curve: 110, scale: 1.08, swayClass: 'swaying-b', delay: 1.8 },
               { type: 'tulip', layer: 'mid', x: W * 0.46, y: H, targetH: H * 0.58, curve: 15, scale: 1.02, swayClass: 'swaying-gentle', delay: 1.2 },
-              { type: 'tulip', layer: 'mid', x: W * 0.54, y: H, targetH: H * 0.59, curve: -15, scale: 1.02, swayClass: 'swaying-gentle', delay: 1.3 },
+              { type: 'lily', palette: 'darkLily', layer: 'mid', x: W * 0.54, y: H, targetH: H * 0.59, curve: -15, scale: 1.02, swayClass: 'swaying-gentle', delay: 1.3 },
 
               // Tier 4: Foreground Framing
               { type: 'peony', layer: 'fore', x: W * 0.06, y: H, targetH: H * 0.68, curve: -120, scale: 1.25, swayClass: 'swaying-gentle', delay: 2.2 },
@@ -2910,7 +2907,7 @@
 
           // Flower at tip
           const detail = (LIGHT_RENDER || cfg.layer === 'bg' || cfg.layer === 'midback') ? 'low' : 'high';
-          const flowerGroup = this.createFlower(cfg.type, endX, endY, cfg.scale, detail, plantIndex + 1);
+          const flowerGroup = this.createFlower(cfg.type, endX, endY, cfg.scale, detail, plantIndex + 1, cfg.palette);
           plantGroup.appendChild(flowerGroup.element);
 
           this.flowers.push({
@@ -3008,7 +3005,7 @@
           return g;
         }
 
-        createFlower(type, x, y, scale = 1.0, detail = 'high', seed = 1) {
+        createFlower(type, x, y, scale = 1.0, detail = 'high', seed = 1, palette = null) {
           const group = document.createElementNS(SVGNS, 'g');
           group.setAttribute('class', 'flower-group');
           group.setAttribute('data-type', type);
@@ -3020,7 +3017,7 @@
 
           // Each bloom draws its own colourway, then shifts it a few degrees
           // so that no two flowers of the same species look cloned.
-          const swatches = FLORA_PALETTE[type] || FLORA_PALETTE.wildflower;
+          const swatches = FLORA_PALETTE[palette] || FLORA_PALETTE[type] || FLORA_PALETTE.wildflower;
           const swatch = swatches[Math.floor(rnd() * swatches.length) % swatches.length];
           const hueShift = jitter(rnd, 7);
           const base = tint(swatch.base, hueShift, jitter(rnd, 0.05));
@@ -4301,20 +4298,6 @@
           downloadFallback();
           showToast(isTouchDevice ? "If nothing saved, touch and hold the card 🌸" : "Keepsake image saved 🌸");
         }).catch(() => showToast("Touch and hold the card to save it 🌸"));
-      });
-
-      // Instagram has no web link for sharing, so the share sheet is the way in:
-      // the PNG goes over, and she picks Instagram (Story, Post or DM).
-      el.shareInstagramBtn.addEventListener('click', () => {
-        keepsakeFile().then(file => {
-          if (canShareFiles(file)) {
-            return navigator.share({ files: [file] }).catch(err => {
-              if (err && err.name !== 'AbortError') showToast("Save the card, then post it from Instagram 🌸");
-            });
-          }
-          downloadFallback();
-          showToast("Card saved — open Instagram and add it from your gallery 🌸");
-        }).catch(() => showToast("Save the card, then post it from Instagram 🌸"));
       });
 
       /* ---- Hide Card: step the words aside to see the garden ---- */
