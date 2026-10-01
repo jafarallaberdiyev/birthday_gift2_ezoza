@@ -529,22 +529,22 @@ html[data-theme="morning"] #vignette,html[data-theme="vintage"] #vignette{
 const CONFIG = {
   themes: ["midnight","morning","vintage","enchanted"],
   whispers: [
-    "you make everything bloom brighter ✨",
-    "still choosing you, always 🌸",
-    "one more reason I love you 💫",
-    "planted with pure tenderness 🌿",
-    "you are my favorite person 🌷",
-    "your smile is my favorite flower 🌼",
-    "growing more in love every day 🌹",
-    "a garden that will never wilt for you 🌙"
+    "happy birthday, E'zoza ✨",
+    "wishing you a gentle year 🌸",
+    "may good things find you 💫",
+    "planted with kindness 🌿",
+    "keep that smile 🌷",
+    "you deserve beautiful days 🌼",
+    "here's to everything ahead 🌹",
+    "a garden that blooms for you 🌙"
   ],
   roseQuotes: [
-    "🌹 «Questa rosa è per te, colta dal giardino del mio cuore.»",
-    "🌹 «Tra mille fiori in questo prato, tu sei la mia rosa più preziosa.»",
-    "🌹 «Un fiore che non sfiorirà mai, proprio come il mio amore per te.»",
-    "🌹 «Ogni petalo custodisce una ragione per cui ti amo.»",
-    "🌹 «Sei la parte più dolce e luminosa di ogni mia giornata.»",
-    "🌹 «Ho fatto sbocciare questa rosa pensando al tuo sorriso.»"
+    "🌹 «A rose for your birthday — may it be a good one.»",
+    "🌹 «Wishing you a year as bright as this bloom.»",
+    "🌹 «May every season be kind to you.»",
+    "🌹 «Keep growing toward the light.»",
+    "🌹 «You deserve every good thing coming your way.»",
+    "🌹 «Happy birthday, E'zoza. Be happy.»"
   ],
   presets: [
     {name:"Just because", occasion:"just because", msg:"I thought of you today|so I grew you something|that will never wilt."},
@@ -567,7 +567,7 @@ const PARAMS = {
   to: clean(qs.get("to"), "E'zoza", 24),
   from: clean(qs.get("from"), "Ja'far", 24),
   occasion: clean(qs.get("occasion"), "on your birthday", 40).toLowerCase(),
-  msg: clean(qs.get("msg"), "Since you came into my life|so many simple moments|have become special to me.|I love your smile, your laugh, your eyes.", 140),
+  msg: clean(qs.get("msg"), "Thank you for every|simple moment that|became special because of you.|I hope this year is kind to you.", 140),
   style: CONFIG.themes.includes((qs.get("style")||"").toLowerCase()) ? qs.get("style").toLowerCase() : "midnight"
 };
 PARAMS.lines = PARAMS.msg.split("|").map(s=>s.trim()).filter(Boolean).slice(0,4);

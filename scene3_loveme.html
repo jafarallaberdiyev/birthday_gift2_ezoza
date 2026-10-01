@@ -789,6 +789,7 @@ html, body {
 #shareLinkBtn { display: none !important; }
 /* The deck plays one continuous song, so the per-scene mute is redundant */
 #soundToggle { display: none !important; }
+.heartCenterBanner { line-height: 1.08; }
 
 /* ---- Embedded in the deck: stay clear of the floating navigation dots ---- */
 .toastNotification { bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
@@ -844,7 +845,7 @@ html, body {
 
     <!-- Phase 1: Boot & Customization Card -->
     <section class="phaseCard active" id="phase1">
-        <div class="terminalTag">PROTOCOL · LOVEME_v3.0</div>
+        <div class="terminalTag">PROTOCOL · BIRTHDAY_v3.0</div>
         <h1 class="mainTitle">ENCRYPTED MESSAGE</h1>
         <p class="subtitle">A high-priority emotional data packet is waiting to be decrypted for someone extraordinary.</p>
         
@@ -893,7 +894,7 @@ html, body {
     <section class="phaseCard heartFinaleCard" id="phase3">
         <div class="terminalTag">DECRYPTION COMPLETE · 100% UNLOCKED</div>
         
-        <div class="heartCenterBanner">I LOVE YOU</div>
+        <div class="heartCenterBanner">HAPPY<br>BIRTHDAY</div>
         <div class="recipientLoveName" id="recipientFinalName"></div>
 
         <p class="romanticDedication" id="romanticNote">
@@ -902,7 +903,7 @@ html, body {
         </p>
 
         <div class="interactiveHint">
-            <span>✨ Move cursor / tilt device to rotate heart · Tap to send love</span>
+            <span>✨ Move cursor / tilt device to rotate heart · Tap to send good wishes</span>
         </div>
 
         <div class="actionButtonsRow">
@@ -1109,11 +1110,11 @@ const matrixCanvas = document.getElementById("matrixCanvas");
 const mCtx = matrixCanvas.getContext("2d");
 
 const baseLovePhrases = [
-    "I LOVE YOU ♡", "THINKING OF YOU ♥", "YOU'RE MY EVERYTHING ✦",
-    "ALWAYS WITH YOU ♡", "YOU MAKE ME SMILE ✨", "MY WHOLE HEART ♥",
-    "ENDLESS LOVE ♡", "YOU ARE MY WORLD ✦", "FOREVER & ALWAYS ♥",
-    "CRAZY ABOUT YOU ♡", "MY FAVORITE PERSON ♥", "TI AMO ♥",
-    "SO IN LOVE WITH YOU ✦", "MY SAFE PLACE ♡", "YOU COMPLETE ME ✦"
+    "HAPPY BIRTHDAY ♡", "WISHING YOU WELL ✦", "KEEP SHINING ✨",
+    "STAY HAPPY ♡", "BEST WISHES ✦", "GOOD THINGS AHEAD ✨",
+    "BE KIND TO YOURSELF ♡", "YOU DESERVE JOY ✦", "ANOTHER YEAR OF YOU ✨",
+    "MAKE A WISH ♡", "CELEBRATE YOU ✦", "BIG DREAMS ✨",
+    "ALL THE BEST ♡", "SMILE TODAY ✦", "A BRIGHT YEAR ✨"
 ];
 
 let mFontSize = 16;
@@ -1132,11 +1133,11 @@ function getActivePhrases() {
     if (!name) return baseLovePhrases;
     return [
         ...baseLovePhrases,
-        `I LOVE YOU ${name} ♡`,
-        `${name} MY HEART ♥`,
-        `THINKING OF ${name} ✦`,
-        `${name} YOU'RE SPECIAL ✨`,
-        `FOREVER YOURS ${name} ♡`
+        `HAPPY BIRTHDAY ${name} ♡`,
+        `${name} ✦ KEEP SHINING`,
+        `BEST WISHES ${name} ✨`,
+        `${name} DESERVES JOY ♡`,
+        `CHEERS TO ${name} ✦`
     ];
 }
 
@@ -1503,7 +1504,7 @@ async function runDecryptionStory() {
     targetBpm = 88;
     if (cinemaPill) cinemaPill.textContent = "✨ INCOMING TRANSMISSION";
     setProgress(20, "DECRYPTING SENTIMENT [20%]");
-    await scrambleText(cinemaWord, "SORRY...", 900);
+    await scrambleText(cinemaWord, "HEY...", 900);
     playHeartbeatThump();
     await wait(750);
 
@@ -1511,7 +1512,7 @@ async function runDecryptionStory() {
     targetBpm = 105;
     if (cinemaPill) cinemaPill.textContent = "💭 THOUGHT BUFFER DETECTED";
     setProgress(45, "ACCESSING CORE MEMORY [45%]");
-    await scrambleText(cinemaWord, "I WAS JUST THINKING ABOUT YOU.", 1200);
+    await scrambleText(cinemaWord, "IT'S A SPECIAL DAY TODAY.", 1200);
     playHeartbeatThump();
     await wait(850);
 
@@ -1527,7 +1528,7 @@ async function runDecryptionStory() {
     targetBpm = 145;
     if (cinemaPill) cinemaPill.textContent = name ? `💌 DEDICATED TO ${name.toUpperCase()}` : "💌 CORE SENTIMENT READY";
     setProgress(88, "SYNCHRONIZING HEARTBEAT [88%]");
-    const message4 = name ? `I REALLY NEED TO TELL YOU, ${name.toUpperCase()}...` : "I REALLY NEED TO TELL YOU...";
+    const message4 = name ? `I WANTED TO SAY, ${name.toUpperCase()}...` : "I WANTED TO SAY...";
     await scrambleText(cinemaWord, message4, 1200);
     playHeartbeatThump();
     await wait(900);
@@ -1538,7 +1539,7 @@ async function runDecryptionStory() {
     setProgress(100, "DECRYPTION COMPLETE [100%]");
 
     // 1. "I"
-    cinemaWord.textContent = "I";
+    cinemaWord.textContent = "HAPPY";
     cinemaWord.classList.remove("wordPop");
     void cinemaWord.offsetWidth;
     cinemaWord.classList.add("wordPop");
@@ -1548,7 +1549,7 @@ async function runDecryptionStory() {
     await wait(500);
 
     // 2. "LOVE"
-    cinemaWord.textContent = "LOVE";
+    cinemaWord.textContent = "BIRTHDAY";
     cinemaWord.classList.remove("wordPop");
     void cinemaWord.offsetWidth;
     cinemaWord.classList.add("wordPop");
@@ -1558,7 +1559,7 @@ async function runDecryptionStory() {
     await wait(500);
 
     // 3. "YOU"
-    cinemaWord.textContent = "YOU ♥";
+    cinemaWord.textContent = "TO YOU ✦";
     cinemaWord.classList.remove("wordPop");
     void cinemaWord.offsetWidth;
     cinemaWord.classList.add("wordPop");
@@ -1590,7 +1591,7 @@ async function runDecryptionStory() {
 
     const recipientFinalName = document.getElementById("recipientFinalName");
     if (recipientFinalName) {
-        recipientFinalName.textContent = name ? `FOR ${name.toUpperCase()} ♡` : `FOREVER YOURS ♡`;
+        recipientFinalName.textContent = name ? `FOR ${name.toUpperCase()} ♡` : `HAPPY BIRTHDAY ♡`;
     }
 
     showPhase("phase3");
